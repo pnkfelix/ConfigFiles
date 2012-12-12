@@ -1,0 +1,27 @@
+#!/bin/bash
+#
+# hgx command extension wrapper
+#
+#set -x
+set -e
+
+function die() {
+	echo $*; exit 2
+}
+
+USAGE="hgx command extensions for mercurial(hg). \n"\
+"Mainly provides a sane interface for interoperating with\n"\
+"perforce (p4) via the perfarce mercurial extension.\n"\
+"   "
+if [ "$#" == "0" ]; then
+	CMDS=`set +e; compgen -A command hgx_; set -e`
+	[[ "${CMDS}" == "" ]] && die "Missing hgx_ files, they should be in PATH? And/or re-run ./install.sh?"
+	echo -e "$USAGE"
+	for i in $CMDS; do
+		$i --one-line-help
+    done
+	echo ''
+	exit 1
+fi
+CMD=$1; shift
+hgx_${CMD} $*

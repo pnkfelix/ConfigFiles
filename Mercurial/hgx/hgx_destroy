@@ -1,0 +1,43 @@
+#!/bin/bash
+#
+# remove all remnants of client
+#
+#set -x
+set -e
+
+CMD=`basename ${0}`
+USAGE="Usage: ${CMD/_/ } local_dir\n"\
+"Removes p4 clientspec and all contents of associated local directory -- be warned!"
+
+[ "$1" == "--one-line-help" ] && echo -e "   destroy - remove a repo created via clone" && exit 0
+if [ "$#" == "0" ]; then
+	echo -e "$USAGE"
+	exit 1
+fi
+
+function die() {
+	echo $*; exit 2
+}
+
+RES=`p4 login -s` 
+USER=`p4 user -o | grep ^User: | cut -f 2`
+WD=${1%/}
+BNAME=`basename $WD`
+shift || die 'Need to specify a local target directory'
+CLIENT="${USER}-${HGX_P4_SPEC_PREFIX}${BNAME}"
+
+if [[ "${1}" != "-f" ]]; then
+    die 'add -f after the name to confirm removal of ./'${WD} 'and p4 clientspec "'${CLIENT}'"'
+fi
+
+set +e  # keep going even if these fail
+BRANCH="${USER}-${HGX_P4_SPEC_PREFIX}${BNAME}-branch"
+HAVE=`p4 branches -u ${USER} | grep ${BRANCH}`
+if [[ "${HAVE}" != "" ]]; then 
+	echo -e  "'p4 branch -d ${BRANCH}' will remove what looks like a related branch"
+fi 
+
+p4 -c ${CLIENT} sync ./${WD}/mirror/...#0 &> /dev/null
+p4 client -d ${CLIENT}
+set -x
+mv ./${WD} /tmp/${WD}.$$

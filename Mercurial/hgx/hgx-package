@@ -1,0 +1,79 @@
+#!/bin/bash
+#
+# package up the contents of a nested repo along with patches generated
+# from 'hg out' on the outer repo.
+#
+#set -x
+set -e
+[ "$1" == "--one-line-help" ] && echo -e "   package - produce a tar containing a nested tamarin repo's contents along with the outer repos 'hg out' patches" && exit 0
+ROOT=`hg root`
+NEST=${ROOT}/.hgx-nest
+ISNESTED=1
+[ -f ${NEST} ] && EMB=`cat ${NEST}` 
+if [ ${#EMB} == 0 ]; then
+	echo "No .hgx-nest file in ${ROOT} so treating as a unnested tamarin repo"
+	ISNESTED=0
+fi
+
+VMDIR=${ROOT}/${EMB}
+BNROOT=${ROOT}/../bundle.$$
+BNDIR=${BNROOT}/integration.bundle
+if [ "$#" != "0" ]; then
+    BNDIR=`pwd`/$1
+    DONTDELETE=1
+fi
+mkdir -p ${BNDIR}
+
+# capture details of integration point
+echo 'Gathering version info'
+INFO=`hgx_info`
+REV=`hg -R ${VMDIR} tip --template "{node|short}\n"`
+echo -e "${INFO}" > ${BNDIR}/packaging-info
+echo `echo -e "${INFO}" | grep inner` "#" $REV > ${BNDIR}/tamarin-rev-info
+if [[ $ISNESTED != 0 ]]; then
+    CL=`hg p4id -p`
+    echo `echo -e "${INFO}" | grep remote`"#"$CL >> ${BNDIR}/tamarin-rev-info
+fi
+
+# produce a patchset (if any) based off root's hg out 
+echo 'Producing patchset...'
+cd ${ROOT}
+set +e
+hgx_patchset ${BNDIR}/patchset
+set -e
+
+# a VM archive
+echo 'Archiving the VM (this takes a while)'
+cd ${VMDIR}
+hg archive -r tip -t tbz2 -p . -I . ${BNDIR}/tamarin.tar.bz2
+
+# install script
+(cat <<-'EOF'
+	#!/bin/bash
+	set -xe
+	EMB=$1/'third_party/avmplus'
+	PDIR=`pwd`/patchset
+	PFL=${PDIR}/files-to-patch.list
+	PLIST=${PDIR}/patch.list
+	function die() { 
+	   echo $*; exit 2 
+	}
+	[ $# == 0 ] && die 'Specify a directory for the install'
+	[[ "$2" != "--no-p4" && -f ${PFL} ]] && cat ${PFL} | xargs -n 1 -t -R 1 -I {} p4 edit $1/{}
+	cat ${PLIST} | xargs -n 1 -t -R 1 -I {} cat ${PDIR}/{} | patch -p1 -l -d $1
+	[ "$2" != "--no-p4" ] && p4 edit ${EMB}/...
+	tar zxf tamarin.tar.bz2 -C ${EMB}
+	[ "$2" != "--no-p4" ] && p4 revert -a ${EMB}/... 
+EOF
+) > ${BNDIR}/install.sh
+chmod +x ${BNDIR}/install.sh
+
+# tie it all up in a nice package
+echo 'Producing integration bundle'
+cd ${BNROOT}
+tar zcf ../tamarin-integration.tgz .
+[ "${DONTDELETE}" != 1 ] && (rm -r ${BNROOT})
+echo -e "built - ${ROOT}/../tamarin-integration.tgz"
+echo -e "--------------------------------------------"
+echo -e "Usage: tar zxf tamarin-integration.tgz; cd integration.bundle; ./install.sh .. [--no-p4]"
+echo -e "   --no-p4  is used for dropping on a non-perforce directory"

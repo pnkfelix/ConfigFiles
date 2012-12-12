@@ -1,0 +1,37 @@
+#!/bin/bash
+#
+# produce patches as a result of reading an input file
+# 'patch.list' that resides in `hg root`/../patchset by
+# default, create it base on hg out if it doesn't exist
+# Optionally takes a directory paramter.
+#set -x
+set -e
+[ "$1" == "--one-line-help" ] && echo -e "   patchset - fills a directory with the patchset produced from 'hg out'" && exit 0
+PFILE='revision.list'
+REPO=`hg root`
+PDIR=$REPO/../patchset
+[ "$#" != "0" ] && PDIR="$1" 
+(mkdir -p ${PDIR})
+cd ${PDIR}
+
+# use hg out to generate list of patches no file exists
+if [[ ! -f ${PFILE} ]]; then
+    set +e
+	`hg -R ${REPO} -q out --template "{node|short}\n" > ${PFILE}`
+	set -e
+else
+	echo 'producing patches based on existing ${PFILE} file (remove it if you want a fresh patch list or specify another directory) '
+fi 
+
+# toast any previous patches
+(rm *.patch &> /dev/null)
+
+PSET=`cat ${PFILE}`
+[ "${#PSET}" == 0 ] && echo "No patches since 'hg out' is empty" && exit 1
+
+hg -R ${REPO} export -g -o "patch-%n-of-%N-%h-rev-%r.patch" $PSET
+
+# generate useful output files (you'll need 'patchtils' installed to run lsdiff)
+ls *.patch > patch.list
+lsdiff --strip=1 *.patch | sort | uniq > files-to-patch.list
+echo "patchset available at "`pwd`

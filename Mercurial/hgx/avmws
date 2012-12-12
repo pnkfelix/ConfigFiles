@@ -1,0 +1,190 @@
+#!/usr/bin/env python
+# ***** BEGIN LICENSE BLOCK *****
+# Version: MPL 1.1/GPL 2.0/LGPL 2.1
+#
+# The contents of this file are subject to the Mozilla Public License Version
+# 1.1 (the "License"); you may not use this file except in compliance with
+# the License. You may obtain a copy of the License at
+# http://www.mozilla.org/MPL/
+#
+# Software distributed under the License is distributed on an "AS IS" basis,
+# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+# for the specific language governing rights and limitations under the
+# License.
+#
+# The Original Code is [Open Source Virtual Machine].
+#
+# The Initial Developer of the Original Code is
+# Adobe System Incorporated.
+# Portions created by the Initial Developer are Copyright (C) 2007
+# the Initial Developer. All Rights Reserved.
+#
+# Contributor(s):
+#   Adobe AS3 Team
+#
+# Alternatively, the contents of this file may be used under the terms of
+# either the GNU General Public License Version 2 or later (the "GPL"), or
+# the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+# in which case the provisions of the GPL or the LGPL are applicable instead
+# of those above. If you wish to allow use of your version of this file only
+# under the terms of either the GPL or the LGPL, and not to allow others to
+# use your version of this file under the terms of the MPL, indicate your
+# decision by deleting the provisions above and replace them with the notice
+# and other provisions required by the GPL or the LGPL. If you do not delete
+# the provisions above, a recipient may use your version of this file under
+# the terms of any one of the MPL, the GPL or the LGPL.
+#
+# ***** END LICENSE BLOCK *****
+
+# Convenience script that runs the AVM+ shell and/or various auxiliary commands
+# inside a Mercurial repository. The script can be located anywhere, and will
+# determine the current repository from the current working directory.  
+# Currently mostly specific to Mac/Intel development.
+
+import optparse, struct, os, sys, subprocess
+
+import sys
+
+def current_repo():
+        p = subprocess.Popen('hg root', shell=True, stdout=subprocess.PIPE);
+        try:
+                for line in p.stdout:
+                        return line[0:-1] # just the first line, no newline
+        finally:
+                p.wait();
+
+def reference_repo():
+        p = subprocess.Popen('(cd %s; hg root)' % sys.path[0], shell=True, stdout=subprocess.PIPE);
+        try:
+                for line in p.stdout:
+                        return line[0:-1] # just the first line, no newline
+        finally:
+                p.wait();
+
+def branch_name():
+        p = subprocess.Popen('(cd %s; hg id -b)' % sys.path[0], shell=True, stdout=subprocess.PIPE);
+        try:
+                for line in p.stdout:
+                        return line[0:-1] # just the first line, no newline
+        finally:
+                p.wait();
+
+
+def effective_repo():
+        if opts.use_reference:
+                return reference_repo()
+        else:
+                return repo 
+
+parser = optparse.OptionParser(usage="usage: %prog (run | xbuild | asc | gdb | abcdump | acceptance | performance | mdfind | abcasm | xopen)")
+parser.disable_interspersed_args()
+parser.add_option("-c", "--configuration", action="store", default="Release", help="Xcode configuration")
+parser.add_option("-v", "--verbose", action="store_true", default=False, help="show what's being run")
+parser.add_option("-g", "--debug", action="store_true", dest="override_config_debug", default=False, help="select a build with debug symbols")
+parser.add_option("-d", "--debugger", action="store_true", dest="override_config_debugger", default=False, help="select a build with debugger")
+parser.add_option("-r", "--reference-repository", action="store_true", dest="use_reference", default=False, help="run tests in the repository where this utility resides or other utils from it")
+parser.add_option("-8", "--64", action="store_true", dest="enable_64", default=False, help="enable 64 bit builds")
+parser.add_option("-4", "--32", action="store_true", dest="enable_32", default=False, help="enable 32 bit builds")
+
+
+opts, args = parser.parse_args()
+
+try:
+        repo = current_repo();
+        if os.path.exists(repo+'/third_party/avmplus'):
+                repo = repo+'/third_party/avmplus'
+except OSError as err:
+        print "hg not found ", err
+        exit(2);
+        
+if not args:
+        print "hg repository ", repo
+	parser.print_help()
+	exit(2)
+
+
+if not opts.configuration in ["Release", "Release_Debugger", "Debug_Debugger", "Debug"]:
+        print 'unknown configuration ', opts.configuration
+        exit(2)
+
+
+if opts.override_config_debug:
+        if opts.configuration == "Release":
+                opts.configuration = "Debug"
+        elif ops.configuration == "Release_Debugger":
+                opts.configuration = "Debug_Debugger"
+                
+
+if opts.override_config_debugger:
+        if opts.configuration == "Release":
+                opts.configuration = "Release_Debugger"
+        elif opts.configuration == "Debug":
+                opts.configuration = "Debug_Debugger"
+
+
+target = "avm"
+build = opts.configuration
+archs = ['i386']
+ 
+if opts.enable_64:
+        if opts.enable_32:
+ 		target = "avm+avm64"
+ 		archs = ['i386', 'x86_64']
+ 	else:
+ 		target = "avm64"
+ 		build = "%s64" % opts.configuration
+ 		archs = [ 'x86_64' ]
+
+
+build_dir = "platform/mac/avmshell/build/%s" % build
+
+
+def avmshell_fullpath(repo, arglist):
+        return "%s/%s/avm %s" %  (effective_repo(), build_dir, ' '.join(arglist))
+
+def rest(args):
+        return ' '.join(args[1:])
+
+
+if args[0] == 'run':
+        cmd = avmshell_fullpath(repo, args[1:])
+elif args[0] == 'xbuild':
+        cmd = "(cd %s; xcodebuild -project ./platform/mac/avmshell/avmshell.xcodeproj -configuration %s -target %s ARCHS=\"%s\" %s)" % (repo, opts.configuration, target, ' '.join(archs), rest(args))
+elif args[0] == 'gdb':
+        # force debug build here?
+        cmd = "gdb --command %s/utils/as3.gdbinit --args %s" % (repo, avmshell_fullpath(repo, args[1:]))
+elif args[0] == 'asc':
+        # fixme hopefully $ASC is defined, could try to guess that it's in $(hg root)/utils
+        cmd = "java -jar $ASC -import %s/core/builtin.abc -import %s/generated/shell_toplevel.abc %s" % (effective_repo(), effective_repo(), rest(args))
+elif args[0] == 'abcdump':
+        cmd = "%s %s/utils/abcdump.abc -- %s" % (avmshell_fullpath(effective_repo(),[]), effective_repo(), rest(args))
+elif args[0] == 'swfmake': 
+        cmd = "%s %s/utils/swfmake.abc -- %s" % (avmshell_fullpath(effective_repo(),[]), effective_repo(), rest(args))
+elif args[0] == 'acceptance':
+        # should be "test acceptance"
+        cmd =  "(cd %s/test/acceptance; ./runtests.py --avm=%s --builtinabc=%s/generated/builtin.abc --shellabc=%s/generated/shell_toplevel.abc %s)" % (effective_repo(), avmshell_fullpath(repo, []), repo, repo, rest(args))
+elif args[0] == 'performance':
+        # should be "test performance"
+        cmd =  "(cd %s/test/performance; ./runtests.py --avm=%s --builtinabc=%s/core/builtin.abc --shellabc=%s/shell/shell_toplevel.abc %s)" % (effective_repo(), avmshell_fullpath(repo, []), repo, repo, rest(args))
+elif args[0] == 'flash-acceptance':
+        cmd =  "(cd %s/test/acceptance; ./runtests.py --avm=%s/test/util/flashrunner/flashrunner.sh --builtinabc=%s/generated/builtin.abc --shellabc=%s/generated/shell_toplevel.abc %s)" % (effective_repo(), repo, repo, repo, rest(args))
+elif args[0] == 'mdfind': # mac specific
+        cmd =  "mdfind -onlyin %s %s" % (effective_repo(),  rest(args))
+elif args[0] == 'abcasm': 
+        cmd =  "%s/utils/abcasm/abcasm.sh %s" % (effective_repo(),  rest(args))
+elif args[0] == 'xopen':
+        cmd = "(cd %s; open ./platform/mac/avmshell/avmshell.xcodeproj)" % (repo)
+else:
+        print 'unknown command ', args[0]
+        exit(2)
+
+if opts.verbose:
+        print 'running ',  cmd
+        if opts.use_reference:
+                print 'reference repository ', effective_repo()
+
+#FIXME exec no shell?
+exitcode = os.system(cmd);
+# This is OS specific, but unix/cygwin systems should work.
+sys.exit(exitcode >> 8);
+

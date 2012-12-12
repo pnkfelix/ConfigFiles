@@ -1,0 +1,54 @@
+#!/bin/bash
+##
+#set -x
+set -e
+[ "$1" == "--one-line-help" ] && echo -e "   nest - clone two repos, one within the other " && exit 0
+
+CMD=`basename ${0}`
+USAGE="Usage: ${CMD/_/ } inner_repo path_to_inner_repo outer_repo_or_depot local_path \n"\
+" Clone an existing repo into a specific location of another newly created repo.\n"\
+" The outer repo of the nesting can be either a perforce (p4) depot or \n"\
+" or a mercurial (hg) repo, but the inner repo must be an hg repo. \n"\
+"   hgx nest tr third_party/avmplus //depot/.../flashruntime-redux my-frr\n"\
+"   hgx nest ../client some/nested/directory http://myserver/outer-host my-stuff"
+
+if [[ "$#" == "0" ]]; then
+	echo -e "$USAGE"
+	exit 1
+fi
+
+function die() {
+	echo $*; exit 2
+}
+
+[ $# -eq 0 ] && die 'Specify an existing repo to be nested'
+SRC=$1; shift
+[ $# -eq 0 ] && die 'Specify a destination path in which to place the nested repo'
+DST=$1; shift
+[ $# -eq 0 ] && die 'Specify the source location from which to clone the new repo (p4 depot or hg repo)' 
+HOST=$1; shift
+[ $# -eq 0 ] && die 'Specify a local target directory for the new repo' 
+DIR=$1; shift
+[ -d "${DIR}" ] && die ${DIR}' already exists, destroy it first'
+
+# leading // then its p4
+if [[ "${HOST:0:2}" == "//" ]]; then
+	echo -e "generating a p4 clone for the outer repo"
+	EXL="/tmp/tmp-excludes.$$"
+	echo -e "$DST" > $EXL
+	hgx clone --extra-excludes-file $EXL $HOST $DIR $*
+	(rm $EXL &> /dev/null)
+	ROOT=$DIR/clone
+else
+	echo -e "cloning outer repo"
+	hg clone $HOST $DIR
+    ROOT=$DIR
+fi
+
+NEST=$ROOT/$DST
+echo -e "cloning nesting repo to" $NEST
+(mkdir -p $NEST &> /dev/null)
+[ ! -d $NEST ] && die 'nesting directory does not exist ' $NEST
+mv $NEST /tmp/hgx-nest.$$
+hg clone $SRC $NEST
+echo -e $DST > $ROOT/.hgx-nest

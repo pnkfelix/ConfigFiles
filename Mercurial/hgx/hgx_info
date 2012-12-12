@@ -1,0 +1,41 @@
+#!/bin/bash
+#
+# Display info about the repo or if its nested about the innner and outer ones
+#
+#set -x
+set -e
+
+[ "$1" == "--one-line-help" ] && echo -e "   info - extended information about the repo" && exit 0
+[ $# != 0 ] && cd $1
+(hg -R clone root &> /dev/null)
+[ $? == 0 ] && cd clone
+ROOT=`hg root`
+NEST=${ROOT}/.hgx-nest
+[ -f ${NEST} ] && EMB=`cat ${NEST}` 
+[ ${#EMB} != 0 ] && echo -e 'inner repo ' `hg -R ${ROOT}/${EMB} path default` '('${EMB}')\n     outer'
+
+# no p4?
+PATHD=`hg path default`
+if [[ "${PATHD:0:2}" != "p4" ]]; then
+	echo 'remote     ' ${PATHD}
+	echo 'local      ' ${ROOT}
+	exit 0
+fi
+
+P4PORT=`echo $PATHD | cut -d '/' -f 3`
+export P4PORT
+SPEC=`echo $PATHD | cut -d '/' -f 4`
+DEPOT=`p4 client -o ${SPEC} | grep ${SPEC} | head -2 | tail -1 | cut -d ' ' -f 1`
+echo 'clientspec ' ${SPEC}
+echo 'remote     ' ${DEPOT}
+echo 'local      ' `hg root`
+echo 'recent changelist' `hg p4id -pr tip` `hg p4id -ir tip | xargs -I {} hg log --template "{rev}:{node|short} {date|shortdate} {author|user}" -r {}`
+CL=`hg p4pending | cut -d ' ' -f 1`
+
+if [ ${#CL} -ne 0 ]; then
+	REV=`hg p4pending | cut -d ' ' -f 3`
+    echo 'pending changelist' ${CL} 'rev' ${REV}
+	[ "$REV" != "" ] && echo '  ' `hg log --template "{rev}:{node|short} {date|shortdate} {author|user} {desc|firstline}\n" -r ${REV} | cut -c-120` 
+else
+	echo 'no pending changelists in this repo'
+fi

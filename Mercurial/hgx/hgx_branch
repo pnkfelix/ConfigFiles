@@ -1,0 +1,16 @@
+#!/bin/bash
+set -e
+[ "$1" == "--one-line-help" ] && echo -e "   branch - support for managing p4 branches via hg" && exit 0
+USAGE="hgx branch commands provide a simple interface to p4 branching."\
+""
+if [ "$#" == "0" ]; then
+	echo -e "$USAGE"
+	CMDS=`compgen -A command branch_`
+	for i in $CMDS; do
+		$i --one-line-help
+    done
+	echo ''
+	exit 1
+fi
+CMD=$1; shift
+branch_${CMD} $*

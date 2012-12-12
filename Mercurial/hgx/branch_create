@@ -1,0 +1,65 @@
+#!/bin/bash
+# creates a branch that is ready to receive an integrate
+#set -x
+set -e
+[ "$1" == "--one-line-help" ] && echo -e "   branch create - make a p4 branch and populate an hg repo with its contents" && exit 0
+CMD=`basename ${0}`
+USAGE="Usage: ${CMD/_/ } p4_source_depot_path p4_target_depot_prefix to_local_dir\n"\
+"\nCreates a p4 branchspec that maps a depot source to target directory.  The commands\n"\
+"'branch pull' and 'branch push' can then be used to integrate from/to the source.\n"\
+"\nThe depot paths should *not* be terminated with a '/' and should exist in the \n"\
+"the depot.  The p4_target_depot_prefix will pre-pended with the basename of 'to_local_dir'\n"\
+"to form the final path for the destination on the depot\n"\
+
+function die() {
+	echo -e $* ; exit 2
+}
+
+# no prompting force all commands
+[ "$1" = "-f" ] && ANS="y" && FORCE=1 && shift
+
+RES=`p4 login -s` 
+SRC=$1 ; shift || die $USAGE
+CHK=`p4 dirs ${SRC} 2>&1 | cut -f 3 -d ' '`
+if [[ "${CHK}" == "no" || "${CHK}" == "protected" ]]; then
+	echo 'Not a valid depot directory - '${SRC} 
+	exit 1
+fi
+
+PRE=$1
+shift || die 'Need to specify a p4 destination prefix for the branch'
+WD=$1
+shift || die 'Need to specify a directory'
+BNAME=`basename $WD`
+USER=`p4 user -o | grep ^User: | cut -f 2`
+BRANCH="${USER}-${HGX_P4_SPEC_PREFIX}${BNAME}-branch"
+DST=${PRE}/${BNAME}
+
+# perl script according to your environment
+[[ -f ${SUB_PERL} ]] || SUB_PERL=~/bin/submitchunks.pl
+[[ -f ${SUB_PERL} ]] || die "Needed perforce submit script submitchunks.pl not set in environment variable 'SUB_PERL' or found in ~/bin"
+
+# create branchspec
+echo "creating branch '${BRANCH}' from '${SRC}' to '${DST}' "
+echo -e "# Auto-generated branch spec"\
+	 	"\nBranch: ${BRANCH}\n"\
+		"\nOwner: ${USER}\n"\
+		"\nDescription: Auto-generated to be used with hgx scripts\n"\
+		"\nView: ${SRC}/... ${DST}/..."\
+		| p4 branch -i 
+
+# populate the branch 
+echo "populating branch via hgx branch pull from destination"
+set +e
+RES=`hgx branch pull ${BNAME}`
+[ $? -ne 0 ] && die $RES
+set -e
+
+# extract cl number from output message and do the commit
+CL=`echo -e "$RES" | tail -1 | cut -d ' ' -f 9`
+[ "${FORCE}" != 1 ] && read -ep "p4 submit -c $CL (via submitchunks.pl), ok? " ANS
+[ "${ANS:0:1}" = "y" ] && { perl ${SUB_PERL} -y -c $CL ; }
+
+# now clone it
+echo "hgx clone to ${WD}"
+hgx clone ${DST} ${WD}

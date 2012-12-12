@@ -1,0 +1,37 @@
+#!/bin/bash
+#
+# fixup a repo that has case collision issues
+#
+#set -x
+set -e
+
+CMD=`basename ${0}`
+USAGE="Usage: ${CMD/_/ } REV\n"\
+"\nFix a repo that reports case collision when doing 'hg update'\n"\
+"Specify the revision at which you wish the correction to occur; 'tip' is valid\n"\
+"You also need the caseguard extension for its 'hg casecheck' command.\n\n"\
+"   @see http://mercurial.selenic.com/wiki/CaseGuardExtension\n"\
+"   @see http://mercurial.selenic.com/wiki/FixingCaseCollisions \n"\
+
+[ "$1" == "--one-line-help" ] && echo -e "   casefixup - correct a case-collision error in a hg repo" && exit 0
+if [ "$1" == "" ]; then
+	echo -e "$USAGE"
+	exit 1
+fi
+
+function die() {
+	echo $*; exit 2
+}
+
+#CHANGES=`hg stat`
+#[ ${#CHANGES} -ne 0 ] && die 'Aborting; clear local changes first'
+
+REV=$1
+echo "Fixing conflicts against revision $REV..."
+hg casecheck
+
+hg debugsetparents $REV
+hg debugrebuildstate 
+hg casecheck | cut -f 1 -d ' ' | xargs -n 1 hg rm -fA
+hg qnew -g -m "case collision fixup against revision $REV" case-collision-fix-for-$REV `hg casecheck | cut -f 1 -d ' '`
+echo "created and applied patch for revision $REV"

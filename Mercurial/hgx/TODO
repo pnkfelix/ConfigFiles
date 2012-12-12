@@ -1,0 +1,32 @@
+- wrap the following script in something...it can be used for the unicode issue
+  p4 submit -c 722537 | grep "//depot" | cut -d ' ' -f 1 | xargs -I {} p4 reopen -c 722537 -t text {}
+
+Usability
+=========
+
+- branch_create, branch_push_pull, etc could inspect clientspec state
+  and report if specified paths are not visible.
+
+- hgx_clone help doc is misleading; says created clientspec is (p4_user)-(2nd-paramater), but its really the basename of the 2nd-parameter, which is significant if e.g. one does
+  % hgx_clone <depot/bar> bar/foo ; hgx_clone <depot/baz> baz/foo ;
+
+ICONV issue in build
+===========
+
+.strings files were pulled as utf-8 but build requires utf-16.  command translates them back
+
+   find . -name \*strings | xargs -I {} -n 1 sh -c "iconv -f UTF-8 -t UTF-16 > t ; mv '{}' '{}'.orig-utf8 ; mv t '{}'"
+
+
+Cygwin
+======
+- hgx_clone will fail after creating the spec. Need to run hg clone command on a *DOS* prompt.  An example is below:
+
+      hg clone --encodingmode=ignore --traceback p4://theoden:1666/rreitmai-pc-sbox-main pc-sbox-main/clone
+
+ may need to 'rm -r pc-sbox-main/clone' before doing so.
+
+- General issue is with p4 commands running under cygwin = not happy.
+
+
+

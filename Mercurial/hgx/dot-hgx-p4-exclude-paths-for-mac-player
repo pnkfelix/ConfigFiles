@@ -1,0 +1,37 @@
+# ignore these mondo big directories
+products
+flash/Installers
+third_party
+WebKit
+
+# add in the 'obviously' needed pieces
++third_party/avmplus
++products/player/ControlPanel
++products/player/external
++products/player/osx
++products/player/plugin
++products/player/resources
++products/player/standalone
++products/AIR
+
+# and other stuff that xcode project relies on...
++third_party/avcEncoder
++third_party/drm
++third_party/drm-public
++third_party/gslib
++third_party/zlib
++third_party/speex
++third_party/spirit
++third_party/rtmfp
++third_party/cts
++third_party/yellowstone
++third_party/AdobeCP
++third_party/LZMA
++third_party/swiftshader
++third_party/SHA256
+
+# finally exclude nasty big stuff ~ 600MB
+third_party/AdobeCP/public/libraries/android
+third_party/AdobeCP/public/libraries/linux
+third_party/AdobeCP/public/libraries/windows
+third_party/drm-public/portingkit/drmtest

@@ -1,0 +1,26 @@
+#!/bin/bash
+# internal formatting function for producing a include/exclude path list for perforce clientspecs
+#set -x
+EXCLRAW=''
+FN=".hgx-p4-exclude-paths"
+[ -f ${FN} ] && EXCLRAW=`cat ${FN}`'\n'
+[ -f ~/${FN} ] && EXCLRAW="${EXCLRAW}"`cat ~/${FN}`'\n'
+DEPOT=$1; shift
+CLIENT=$1; shift
+[ -f "$1" ] && EXCLRAW="${EXCLRAW}"`cat "$1"`'\n'
+EXCLRAW=`echo -e "${EXCLRAW}" | grep -v '^#' | sed '/^$/d'`
+EXCL=''
+if [[ ${#EXCLRAW} != 0 ]]; then
+	# process the lines in order as per p4; see 'Views' documentation
+	EXCLIST=`echo -e "${EXCLRAW}" | grep -v "^+"`
+	for i in `echo -e "${EXCLRAW}"`; do
+		if [ "${i:0:1}" == "+" ]; then
+			# extra check to only add +ve entries if they are not already excluded (which may occur with hgx nest)
+			HIT=`echo -e "${EXCLIST}" | grep -x "${i:1}"`
+			[ "$HIT" == "" ] && EXCL=${EXCL}'\n'`echo -e "${i:1}" | awk '{ print "\t" "'"${DEPOT}"'" "/" $0 "/... //" "'"${CLIENT}"'" "/" $0 "/..." }'`
+		else
+			EXCL=${EXCL}'\n'`echo -e "${i}" | awk '{ print "\t-" "'"${DEPOT}"'" "/" $0 "/... //" "'"${CLIENT}"'" "/" $0 "/..." }'`
+		fi
+    done
+fi 
+echo -e "${EXCL}"

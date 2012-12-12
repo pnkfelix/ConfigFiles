@@ -1,0 +1,149 @@
+
+Installation
+------------
+
+(1) http://hg.mozilla.org/users/rreitmai_adobe.com/hgx/raw-file/tip/install.sh
+
+(2) ./install.sh
+
+This will pull needed repos into ~/lib/mercurial and create softlinks
+to the hgx commands from ~/bin.
+
+(3) update .hgrc file with contents of hgrc.updates
+
+(4) type 'hg help perfarce' to ensure that the extension(s) is working
+
+(5) copy appropriate dot-hgx-p4-exclude-paths-xxx into ~/.hgx-p4-exclude-paths 
+     (or the directory where you're going to clone) in order to limit the number 
+     of files pulled to your client.  Run hgx-p4-excludes and you should see
+     a long list of directories indicating that the exclude list is available.
+
+Usage
+-----
+
+ avmws  (can be used in any tamarin-redux repo to compile, debug, run 
+         acceptance/performance test and a number of other things.)
+
+ hgbl   (One entry per line log (includes p4 changelists if repo was cloned from p4))
+
+
+(6) Make an hg clone of a p4 depot location (no parameters = help)
+
+ hgx clone //depot/users/rickr/tamarin avm  
+
+(7) Submitting to p4 is done in 2 steps
+
+ hg push                  (creates a pending changelist)
+ hg p4submit              (replacement for 'p4 submit')
+
+
+Some useful commands
+--------------------
+
+ hgx destroy                       (remove all remnants of an hgx_clone)
+ hgx info                          (shows useful things about your repo)
+
+ hg p4pending                      (shows outstanding changes not yet in p4 depot)
+
+ p4 dirs //depot/users/rickr/*     (shows directories on p4 depot)
+ p4 client -o rreitmai-avm         (contents of a clientspec)
+ p4 clients -u rreitmai            (all clientspecs owned by me)
+
+
+Branches
+--------
+
+Branches tie together two p4 depot locations and in hgx a
+local clone is made of the target location.
+
+ hgx branch create //depot/users/rickr/tamarin //depot/users/rickr/branches avm
+
+ hgx branch pull      (integrate from //depot/users/rickr/tamarin)
+ hgx branch push      (integrate to //depot/users/rickr/tamarin)
+
+NB: integrations have nothing to do with the contents of
+your cloned repo.  You must 'hg push; hg p4submit' 
+your changes to the branch first, followed by a 'hgx branch push'
+to feed them to the trunk.
+
+Also note that integrations are done in your default
+clientspec, thus you must have both 'ends' of the branch
+available in this spec.  This is different from working
+with your hgx clone'd repo wherein a clientspec was created
+specifically for that clone.
+
+If you do not have both 'ends' available in the clientspec,
+then commands such as 'hgx branch pull' may report that they had
+nothing to do (rather than reporting an error as you might
+expect).
+
+
+Useful p4 commands
+------------------
+
+ p4 branch -o rreitmai-avm-branch    (contents of a branchspec)
+ p4 client -o rreitmai-avm           (contents of a clientspec)
+ p4 branches -u rreitmai             (shows branches owned by me)
+ p4 clients -u rreitmai              (shows clients owned by me)
+ p4 changes -u rreitmai -m 5         (list a max of 5 changes owned by me)
+ p4 change -s <changelist_#>         (contents of change)
+
+
+* '--encodingmode=ignore' can be used on a 'hg pull' if you encounter
+an error message similar to ''utf8' codec can't decode byte'
+
+** Notice that the branch name and the clone name are the same.
+This is on purpose and allows the branch_xxx scripts to work from 
+within the hg repo without specifying a parameter ('hg path' is
+parsed to construct the branch name).
+
+*** If you see 'unicode' text mapping issue or somesuch during
+submit you need to 'retype' the files.  The following script
+performs the operation on all offending files, after substituing
+the <changelist_#>:
+  p4 submit -c <changelist_#> | grep "//depot" | cut -d ' ' -f 1 | xargs -I {} p4 reopen -c <changelist_#>  -t text {}
+
+**** If you wish to prepend some text to the p4 client/branch spec 
+     names, then set the environment variable HGX_P4_SPEC_PREFIX.
+     Clientspecs are named :
+         CLIENT="${USER}-${HGX_P4_SPEC_PREFIX}${BNAME}"
+     Branchspec are named :
+         BRANCH="${USER}-${HGX_P4_SPEC_PREFIX}${BNAME}-branch"
+
+
+update_bugz
+===========
+
+This tool requires the latest pybugz code (available via 
+'git clone http://github.com/williamh/pybugz.git').
+
+The latest changes have fixed an authentication bug, on older 
+versions you won't be able to perform updates to bugzilla.
+
+Also watch out on osx since I found the default 'setup.py'
+put the files in /Library/Python/2.6/site-packages and 
+python on mac looks in /Library/Frameworks/Python.framework/Versions/2.6/lib/python2.6/site-packages
+which is really annoying;  a couple of soft-links fixed it up.
+You may also need to install argparse, and if you do so like so:
+ 'easy_install argparse' , they may again end up in the wrong
+location.
+
+Once all that is sorted out you should be able to type 'bugz'
+on the command line.  And voila!  You've got a command-line
+interface to bugzilla.
+
+'update_bugz' generates bugz commands for the mundane action
+of slapping a comment link in the bug and updating the whiteboard.
+See its' help.
+
+
+GTM - trims whitespace in Xcode
+====
+
+Download zip from:
+  http://code.google.com/p/google-toolbox-for-mac/wiki/GTMXcodePlugin
+
+unzip here 
+  ~/Library/Application Support/Developer/Shared/Xcode/Plug-ins
+
+Preferences->Google 'Correct whitespace on save'

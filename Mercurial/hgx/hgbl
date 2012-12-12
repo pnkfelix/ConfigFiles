@@ -1,0 +1,23 @@
+#!/bin/bash
+#
+# hg brief log with knowledge of perfarce repos
+#
+#set -x
+OPTS="-fl 10 $*"
+if [ "${1:0:1}" == "-" ]; then
+    # user specified options then pass it through
+    OPTS="$*"
+elif [ ! -d ${@: -1} ]; then
+    # not a dir?  then assume last parameter is a branch name
+	BRCH="${@: -1}"
+	CNT=`expr ${#@} - 1`
+	OPTS="-l 10 -fb $BRCH ${@:1:${CNT}}"
+fi
+
+# perfarce cloned repo?
+PATHD=`hg path default`
+if [[ "${PATHD:0:2}" == "p4" ]]; then
+   hg log $OPTS --template '{extras} {rev} {date|shortdate} {author|user} {desc|firstline}\n' | awk '{sub(/p4\=/," ")}; 1' | cut -d ' ' -f 2- | cut -c-120
+else
+   hg log $OPTS --template '{rev} {date|shortdate} {author|user} {desc|firstline}\n' | cut -c-120
+fi

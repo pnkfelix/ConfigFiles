@@ -1,0 +1,24 @@
+#!/bin/bash
+#
+# Edit the pending changelist 
+#
+#set -x
+set -e
+[ "$1" == "--one-line-help" ] && echo -e "   edit - edit the pending p4 changelist of the repo, if any" && exit 0
+[ $# != 0 ] && cd $1
+(hg -R clone root &> /dev/null)
+[ $? == 0 ] && cd clone
+ROOT=`hg root`
+PATHD=`hg path default`
+CLIENT=`echo ${PATHD} | cut -d '/' -f 4`
+CL=`hg p4pending | head -1 | cut -d ' ' -f 1`
+if [ ${#CL} -eq 0 ]; then
+    echo 'No valid pending changelist'
+	exit 1
+fi
+ALL=`hg p4pending | wc | awk '{print $1}'`
+if [[ ${ALL} -gt 1 ]]; then
+	echo "Warning more than a single changelist in this repo; use 'hg p4pending' "
+fi
+echo 'opening changelist' ${CL} 'on client' ${CLIENT}
+p4 -c ${CLIENT} change ${CL}

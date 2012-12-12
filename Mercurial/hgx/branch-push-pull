@@ -1,0 +1,57 @@
+#!/bin/bash
+# Merges trunk to/from sandbox - not to be called directly
+#set -x
+set -e
+[ "$2" == "--one-line-help" ] && echo -e "   branch $1 - support for managing p4 branches via hg" && exit 0
+CMD=`basename ${0}`
+CMD=`echo ${CMD} | cut -f 1 -d '_'`
+USAGE="Usage: hgx-${CMD}-{push | pull}\n"
+
+if [[ "${1}" == "pull" ]]; then
+	WHAT="pull"
+	VOPT="2"
+	IOPT=""
+else
+	WHAT="push"
+	VOPT="1"
+	IOPT="-r"
+fi
+shift
+
+function die() {
+	echo $* ; exit 2
+}
+
+# perl script according to your environment
+[[ -f ${IN_PERL} ]] || IN_PERL=~/bin/intool.pl
+[[ -f ${IN_PERL} ]] || die "Perforce merge script intool.pl not set in environment variable 'IN_PERL' or found in ~/bin"
+
+RES=`p4 login -s` 
+BNAME=$1
+shift || BNAME=`hg path 2>&1 | cut -d '-' -f 2-`
+if [[ "${BNAME}" == "" ]]; then
+	die "Need to specify a branch name"
+fi
+
+USER=`p4 user -o | grep ^User: | cut -f 2`
+BRANCH="${USER}-${HGX_P4_SPEC_PREFIX}${BNAME}-branch"
+
+VIEW=`p4 branch -o ${BRANCH} | tail -2 | head -1 | cut -d ' ' -f ${VOPT}`
+perl ${IN_PERL} -1 -d -t -v -i ${IOPT} -b ${BRANCH}
+p4 resolve -as
+p4 resolve -n
+
+OUT=`p4 opened ${VIEW} 2>&1 | cut -d ' ' -f 3`
+if [[ "${OUT}" == "file(s)" ]]; then
+	echo "Nothing to ${WHAT}"
+	exit 1
+fi
+
+DESC="${WHAT} via branch '${BRANCH}'"
+CHANGE=`echo -e "Change: new\nDescription: '${DESC}' " | p4 change -i`
+CL=`echo ${CHANGE} | cut -d ' ' -f 2`
+p4 reopen -c ${CL} ${VIEW}
+
+echo "############"
+echo "${WHAT} results ready to submit via 'p4 submit -c" ${CL}"' and/or 'p4 change" ${CL}"' to modify description"
+echo "or revert it all via 'p4 revert -c" ${CL} ${VIEW} "; p4 change -d " ${CL}"'"

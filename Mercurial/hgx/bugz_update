@@ -1,0 +1,92 @@
+#!/bin/bash
+#
+#set -x
+set -e
+
+USAGE=\
+"Usage: $0  ( tr | nj | repo_url) [whiteboard-value]\n"\
+"\nGenerate pybugz command(s) that will add a comment to a bug when executed. The\n"\
+"comment consists of a link to a repo changeset along with the user that submitted \n"\
+"the change. Optionally if the parameter is 'tr' or 'nj' or if 'whiteboard-value' is \n"\
+"specified then the whiteboard field of the bug will be updated.\n"\
+"\nExpected input follows a specific format which is best described by an example command: \n"\
+"\thg out --template \"{node|short} {author|user} {desc|firstline}\\\n\" | sed '1,2d' | bugz_update\n"\
+"\thg log -r tip --template \"{node|short} {author|user} {desc|firstline}\\\n\" | bugz_update\n"\
+"\nThe bug number must appear in the description section otherwise no bugz command \n"\
+"will be generated.  A list of changes that didn't generate a bugz line will be output \n"\
+"once the tool has completed.\n"\
+"\nThe folowing environment variables should be set accordingly:\n"\
+"  export BZUSER=\"-u <bugzilla_userid>\" \n"\
+"  export BZPWD=\"-p <bugzilla_password>\" \n"\
+"  BZDB=\"https://bugzilla.mozilla.org\" (optional, handy for landfill.bugzilla.org testing)\n"\
+""
+
+[[ -z "$BZDB" ]] && BZDB="https://bugzilla.mozilla.org"
+#[[ -z "$BZUSER" ]] && BZUSER="-u rreitmai@adobe.com"
+#[[ -z "$BZPWD" ]] && BZPWD="-p mysecretpwd"
+
+# if set will add a comment line
+CMNT=1
+
+# prefix for the repo, used for linking to the hg repo and determining
+# if and what should be added to the whiteboard.
+REPO=$1
+if [[ "$1" == "tr" ]]; then
+	REPO=http://hg.mozilla.org/tamarin-redux
+	BZBOARD='fixed-in-tamarin'
+	CMNT=0  # no longer needed for tamarin-redux checkins
+elif [[ "$1" == "nj" ]]; then
+	REPO=http://hg.mozilla.org/projects/nanojit-central    
+	BZBOARD='fixed-in-nanojit'
+else
+	REPO="$1"
+fi
+
+[[ -z "$REPO" ]] && echo -e "$USAGE" && exit 1
+shift
+
+[[ -n "$1" ]] && BZBOARD=$1
+
+function whiteboard() {
+	if [[ -z "$BZBOARD" ]]; then
+		return
+	fi
+	CWHITE=`bugz --skip-auth -b ${BZDB}/ -q -f get $* | grep "Whiteboard  :" | cut -d ':' -f 2- | tr -d ' '`
+	WOPT=`echo "$CWHITE" | awk '!/'${BZBOARD}'/{ print "-w \"'${CWHITE},${BZBOARD}'\"" }' | sed 's/\",/\"/' `
+}
+
+function emitbuz() {
+    LN="$*"
+
+    # split into 2 parts
+    NODE=`echo "${LN}" | cut -d ' ' -f 1`
+    AUTH=`echo "${LN}" | cut -d ' ' -f 2 | tr -d '>'`
+    REST=`echo "${LN}" | cut -d ' ' -f 3-`
+
+    for VAL in $REST
+    do
+		VAL=`echo "${VAL}" | tr -d ':-.]'`
+	    if [ ${VAL} -eq ${VAL} 2> /dev/null ]; then
+		   WOPT=''
+		   whiteboard $VAL
+		   COMMENT=''
+		   [[ 1 -eq "$CMNT" ]] && COMMENT="-c \"${AUTH} ${REPO}/rev/${NODE}\""
+	       echo bugz -b ${BZDB}/ ${BZUSER} ${BZPWD} -q modify ${WOPT} ${COMMENT} ${VAL}
+           return
+	    fi
+    done
+    NOTFOUND="# ${NODE} ${REST}\n${NOTFOUND}"
+}
+
+NOTFOUND=""
+while read LN; do 
+    emitbuz ${LN}
+done 
+
+if [ -n "${NOTFOUND}" ]; then
+    echo "# -----------------------"
+    echo "# ------ WARNING --------"
+    echo "# -----------------------"
+    echo "# No bug numbers found on the following nodes : " 
+	echo -e ${NOTFOUND}
+fi
