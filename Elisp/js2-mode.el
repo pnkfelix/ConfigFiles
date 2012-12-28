@@ -1927,7 +1927,7 @@ Returns nil and consumes nothing if TEST is not the next character."
 
 (defsubst js2-java-identifier-start-p (c)
   (or
-   (memq c '(?$ ?_))
+   (memq c '(?$ ?_ ?%))
    (char-is-uppercase c)
    (char-is-lowercase c)))
 
@@ -11246,7 +11246,12 @@ occurs on another line."
   (interactive)
   (js2-mode-match-delimiter "(" ")"))
 
-(defun js2-mode-match-curly (arg)
+(defun js2-mode-match-curly ()
+  "Insert matching curly-brace."
+  (interactive)
+  (js2-mode-match-delimiter "{" "}"))
+
+(defun js2-mode-match-curly-old (arg)
   "Insert matching curly-brace.
 With prefix arg, no formatting or indentation will occur -- the close-brace
 is simply inserted directly at the point."
