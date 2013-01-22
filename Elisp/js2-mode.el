@@ -59,6 +59,8 @@
 ;;  - put `js2.el' somewhere in your emacs load path
 ;;  - M-x byte-compile-file RET <path-to-js2.el> RET
 ;;    Note:  it will refuse to run unless byte-compiled
+;;    Alternative if you hit limits above:
+;;    % emacs --batch --eval '(byte-compile-file "js2-mode.el")'
 ;;  - add these lines to your .emacs file:
 ;;    (autoload 'js2-mode "js2" nil t)
 ;;    (add-to-list 'auto-mode-alist '("\\.js$" . js2-mode))
