@@ -59,6 +59,8 @@
 ;;  - put `js2.el' somewhere in your emacs load path
 ;;  - M-x byte-compile-file RET <path-to-js2.el> RET
 ;;    Note:  it will refuse to run unless byte-compiled
+;;    Alternative if you hit limits above:
+;;    % emacs --batch --eval '(byte-compile-file "js2-mode.el")'
 ;;  - add these lines to your .emacs file:
 ;;    (autoload 'js2-mode "js2" nil t)
 ;;    (add-to-list 'auto-mode-alist '("\\.js$" . js2-mode))
@@ -1927,7 +1929,7 @@ Returns nil and consumes nothing if TEST is not the next character."
 
 (defsubst js2-java-identifier-start-p (c)
   (or
-   (memq c '(?$ ?_))
+   (memq c '(?$ ?_ ?%))
    (char-is-uppercase c)
    (char-is-lowercase c)))
 
@@ -11246,7 +11248,12 @@ occurs on another line."
   (interactive)
   (js2-mode-match-delimiter "(" ")"))
 
-(defun js2-mode-match-curly (arg)
+(defun js2-mode-match-curly ()
+  "Insert matching curly-brace."
+  (interactive)
+  (js2-mode-match-delimiter "{" "}"))
+
+(defun js2-mode-match-curly-old (arg)
   "Insert matching curly-brace.
 With prefix arg, no formatting or indentation will occur -- the close-brace
 is simply inserted directly at the point."
