@@ -4,3 +4,6 @@
 [submodule "Elisp/multiple-cursors"]
 	path = Elisp/multiple-cursors
 	url = git@github.com:magnars/multiple-cursors.el.git
+[submodule "Elisp/iedit"]
+	path = Elisp/iedit
+	url = https://github.com/victorhge/iedit
