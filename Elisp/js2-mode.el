@@ -1929,7 +1929,7 @@ Returns nil and consumes nothing if TEST is not the next character."
 
 (defsubst js2-java-identifier-start-p (c)
   (or
-   (memq c '(?$ ?_ ?%))
+   (memq c '(?$ ?_))
    (char-is-uppercase c)
    (char-is-lowercase c)))
 
