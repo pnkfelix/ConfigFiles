@@ -1,0 +1,6 @@
+[submodule "Elisp/markdown-mode"]
+	path = Elisp/markdown-mode
+	url = git://jblevins.org/git/markdown-mode.git
+[submodule "Elisp/multiple-cursors"]
+	path = Elisp/multiple-cursors
+	url = git@github.com:magnars/multiple-cursors.el.git
