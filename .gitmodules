@@ -7,3 +7,6 @@
 [submodule "Elisp/iedit"]
 	path = Elisp/iedit
 	url = https://github.com/victorhge/iedit
+[submodule "Elisp/prelude"]
+	path = Elisp/prelude
+	url = git@github.com:bbatsov/prelude.git
