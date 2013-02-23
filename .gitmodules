@@ -7,3 +7,12 @@
 [submodule "Elisp/iedit"]
 	path = Elisp/iedit
 	url = https://github.com/victorhge/iedit
+[submodule "Elisp/orgmode-markdown"]
+	path = Elisp/orgmode-markdown
+	url = git@github.com:pnkfelix/ORGMODE-Markdown.git
+[submodule "Elisp/clojure-mode"]
+	path = Elisp/clojure-mode
+	url = git@github.com:pnkfelix/clojure-mode.git
+[submodule "Elisp/org-mode"]
+	path = Elisp/org-mode
+	url = git@github.com:pnkfelix/org-mode.git
