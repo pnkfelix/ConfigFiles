@@ -16,3 +16,6 @@
 [submodule "Elisp/org-mode"]
 	path = Elisp/org-mode
 	url = git@github.com:pnkfelix/org-mode.git
+[submodule "Elisp/prelude"]
+	path = Elisp/prelude
+	url = git@github.com:bbatsov/prelude.git
