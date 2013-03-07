@@ -19,3 +19,21 @@
 [submodule "Elisp/prelude"]
 	path = Elisp/prelude
 	url = git@github.com:bbatsov/prelude.git
+[submodule "Elisp/unicode-fonts"]
+	path = Elisp/unicode-fonts
+	url = git@github.com:rolandwalker/unicode-fonts.git
+[submodule "Elisp/font-utils"]
+	path = Elisp/font-utils
+	url = git@github.com:rolandwalker/font-utils.git
+[submodule "Elisp/ucs-utils"]
+	path = Elisp/ucs-utils
+	url = git@github.com:rolandwalker/ucs-utils.git
+[submodule "Elisp/persistent-soft"]
+	path = Elisp/persistent-soft
+	url = git@github.com:rolandwalker/persistent-soft.git
+[submodule "Elisp/pcache"]
+	path = Elisp/pcache
+	url = git@github.com:sigma/pcache.git
+[submodule "Elisp/helm"]
+	path = Elisp/helm
+	url = git@github.com:emacs-helm/helm.git
