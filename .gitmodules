@@ -37,3 +37,9 @@
 [submodule "Elisp/helm"]
 	path = Elisp/helm
 	url = git@github.com:emacs-helm/helm.git
+[submodule "Elisp/emacs-bash-completion"]
+	path = Elisp/emacs-bash-completion
+	url = git@github.com:szermatt/emacs-bash-completion.git
+[submodule "Elisp/circe"]
+	path = Elisp/circe
+	url = git://github.com/jorgenschaefer/circe.git
