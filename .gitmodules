@@ -40,3 +40,12 @@
 [submodule "Elisp/emacs-w3m"]
 	path = Elisp/emacs-w3m
 	url = https://github.com/doitian/emacs-w3m
+[submodule "Elisp/emacs-bash-completion"]
+	path = Elisp/emacs-bash-completion
+	url = git@github.com:szermatt/emacs-bash-completion.git
+[submodule "Elisp/circe"]
+	path = Elisp/circe
+	url = git://github.com/jorgenschaefer/circe.git
+[submodule "Mercurial/trychooser"]
+	path = Mercurial/trychooser
+	url = git@github.com:pbiggar/trychooser.git
