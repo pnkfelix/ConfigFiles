@@ -37,3 +37,6 @@
 [submodule "Elisp/helm"]
 	path = Elisp/helm
 	url = git@github.com:emacs-helm/helm.git
+[submodule "Elisp/emacs-w3m"]
+	path = Elisp/emacs-w3m
+	url = https://github.com/doitian/emacs-w3m
