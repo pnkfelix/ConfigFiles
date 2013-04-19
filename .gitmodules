@@ -43,3 +43,6 @@
 [submodule "Elisp/circe"]
 	path = Elisp/circe
 	url = git://github.com/jorgenschaefer/circe.git
+[submodule "Mercurial/qimportbz"]
+	path = Mercurial/qimportbz
+	url = ./Mercurial/qimportbz
