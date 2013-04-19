@@ -49,3 +49,6 @@
 [submodule "Mercurial/trychooser"]
 	path = Mercurial/trychooser
 	url = git@github.com:pbiggar/trychooser.git
+[submodule "Mercurial/qimportbz"]
+	path = Mercurial/qimportbz
+	url = git@github.com:pnkfelix/qimportbz.git
