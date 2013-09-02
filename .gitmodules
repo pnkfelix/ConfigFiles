@@ -52,3 +52,9 @@
 [submodule "Mercurial/qimportbz"]
 	path = Mercurial/qimportbz
 	url = https://github.com/pnkfelix/qimportbz
+[submodule "Elisp/cedet"]
+	path = Elisp/cedet
+	url = git@github.com:emacsmirror/cedet.git
+[submodule "Elisp/auto-complete"]
+	path = Elisp/auto-complete
+	url = https://github.com/auto-complete/auto-complete
