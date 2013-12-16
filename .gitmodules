@@ -58,3 +58,6 @@
 [submodule "Elisp/auto-complete"]
 	path = Elisp/auto-complete
 	url = https://github.com/auto-complete/auto-complete
+[submodule "Elisp/linepad"]
+	path = Elisp/linepad
+	url = git@github.com:holtzermann17/linepad.git
