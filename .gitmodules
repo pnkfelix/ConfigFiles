@@ -61,3 +61,6 @@
 [submodule "Elisp/linepad"]
 	path = Elisp/linepad
 	url = git@github.com:holtzermann17/linepad.git
+[submodule "Elisp/egg"]
+	path = Elisp/egg
+	url = git@github.com:pnkfelix/egg.git
