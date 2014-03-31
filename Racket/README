@@ -1,0 +1,14 @@
+This directory is designed to be linked as the Racket addon-dir.
+
+This directory is designed, if possible, to be linked directly to the
+parent directory that Racket identifies as `(find-system-path
+'addon-dir).
+
+For example, for me, on Mac OS X the addon-dir for Racket is:
+  /Users/pnkfelix/Library/Racket/
+
+If the directory already exists and you do not want to replace it with
+a symlink to this directory, or if you want more customized control
+over what gets added to your addon-dir, then of course you have the
+option of sym-linking in contents of this directory into your own
+addon-dir on a case-by-case basis.
