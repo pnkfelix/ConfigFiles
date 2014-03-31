@@ -64,3 +64,6 @@
 [submodule "Elisp/egg"]
 	path = Elisp/egg
 	url = git@github.com:pnkfelix/egg.git
+[submodule "Elisp/flycheck"]
+	path = Elisp/flycheck
+	url = git@github.com:pnkfelix/flycheck.git
