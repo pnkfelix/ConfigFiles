@@ -67,3 +67,6 @@
 [submodule "Elisp/flycheck"]
 	path = Elisp/flycheck
 	url = git@github.com:pnkfelix/flycheck.git
+[submodule "Elisp/dash"]
+	path = Elisp/dash
+	url = git@github.com:pnkfelix/dash.el.git
