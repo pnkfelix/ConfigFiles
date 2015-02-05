@@ -23,6 +23,17 @@ function parse_git_branch {
   fi
 }
 
+function parse_just_git_branch {
+  if ! search_parents_for_dotgit ; then
+    output=$(git branch --no-color 2>/dev/null)
+    errstate=$?
+    if [ $errstate -eq 0 ] ; then
+      output2=$(echo "$output" | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/')
+      echo $output2
+    fi
+  fi
+}
+
 function parse_hg_branch_orig {
   output=$(hg branch 2> /dev/null)
   errstate=$?
