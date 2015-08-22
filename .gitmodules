@@ -73,3 +73,6 @@
 [submodule "Elisp/rust-mode"]
 	path = Elisp/rust-mode
 	url = git@github.com:rust-lang/rust-mode.git
+[submodule "Elisp/mmm-mode"]
+	path = Elisp/mmm-mode
+	url = git@github.com:purcell/mmm-mode.git
