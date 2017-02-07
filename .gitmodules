@@ -76,3 +76,6 @@
 [submodule "Elisp/mmm-mode"]
 	path = Elisp/mmm-mode
 	url = git@github.com:purcell/mmm-mode.git
+[submodule "Elisp/emacs-lsp"]
+	path = Elisp/emacs-lsp
+	url = git@github.com:vibhavp/emacs-lsp.git
